@@ -16,6 +16,7 @@ import (
 )
 
 var Event = event.EventMessage
+var About = "!wiki 'langcode (en)' 'search (Stack Overflow)'... "
 
 type WikiResponse struct {
 	Batchcomplete string `json:"batchcomplete"`
@@ -41,7 +42,7 @@ func Handle(source mautrix.EventSource, evt *event.Event) {
 		log.Println(err)
 		return
 	}
-	if msgs[0] == "!wiki" {
+	if len(msgs) >= 1 && msgs[0] == "!wiki" {
 		matrix.Client.SendReaction(evt.RoomID, evt.ID, "processing...")
 		if len(msgs) < 3 {
 			matrix.Client.SendText(evt.RoomID, "Please use the correct syntax, for example `!wiki \"langcode (en)\" \"search (Stack Overflow)\"")

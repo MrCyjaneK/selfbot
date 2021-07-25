@@ -9,6 +9,7 @@ import (
 )
 
 var Event = event.EventMessage
+var About = "!ping - pong!"
 
 func Handle(source mautrix.EventSource, evt *event.Event) {
 	if evt.Sender != matrix.Client.UserID {

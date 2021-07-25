@@ -11,6 +11,7 @@ import (
 )
 
 var Event = event.EventMessage
+var About = "!vote 'Question' 'Options'... - Create a voting poll"
 
 type WikiResponse struct {
 	Batchcomplete string `json:"batchcomplete"`
@@ -33,7 +34,7 @@ func Handle(source mautrix.EventSource, evt *event.Event) {
 		log.Println(err)
 		return
 	}
-	if msgs[0] == "!vote" {
+	if len(msgs) >= 1 && msgs[0] == "!vote" {
 		if len(msgs) < 3 {
 			matrix.Client.SendText(evt.RoomID, "Please use the correct syntax, for example `!vote \"Question\" \"Options\"...")
 			return

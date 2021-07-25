@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"plugin"
+	"strings"
 
 	"git.mrcyjanek.net/mrcyjanek/selfbot/db"
 	"git.mrcyjanek.net/mrcyjanek/selfbot/matrix"
@@ -15,6 +16,7 @@ import (
 )
 
 var DataDir string
+var cmds []string
 
 func main() {
 	load()
@@ -44,6 +46,11 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
+			pAbout, err := p.Lookup("About")
+			if err != nil {
+				log.Fatal(err)
+			}
+			cmds = append(cmds, *pAbout.(*string))
 			ev := pEvent.(*event.Type)
 			syncer.OnEventType(*ev, pHandle.(func(mautrix.EventSource, *event.Event)))
 		}
@@ -52,6 +59,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
+		if evt.Sender != matrix.Client.UserID {
+			return
+		}
+		if evt.Content.AsMessage().Body == "!help" {
+			matrix.Client.SendText(evt.RoomID, "List of available commands: \n  - "+strings.Join(cmds, "\n  - "))
+		}
+	})
 	err = matrix.Client.Sync()
 	if err != nil {
 		log.Fatal(err)

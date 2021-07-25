@@ -8,6 +8,7 @@ import (
 )
 
 var Event = event.EventMessage
+var About = "!ud 'word' - Get definition from urban dictionary"
 
 func Handle(source mautrix.EventSource, evt *event.Event) {
 	if evt.Sender != matrix.Client.UserID {
@@ -15,9 +16,10 @@ func Handle(source mautrix.EventSource, evt *event.Event) {
 	}
 	msgs, err := gosh.Split(evt.Content.AsMessage().Body)
 	if err != nil {
+		matrix.Client.SendText(evt.RoomID, err.Error())
 		return
 	}
-	if msgs[0] == "!ud" {
+	if len(msgs) >= 1 && msgs[0] == "!ud" {
 		if len(msgs) < 2 {
 			matrix.Client.SendText(evt.RoomID, "Please use the correct syntax, for example `!ud \"wat\"")
 			return
