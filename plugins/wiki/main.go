@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -39,7 +38,6 @@ func Handle(source mautrix.EventSource, evt *event.Event) {
 	}
 	msgs, err := gosh.Split(evt.Content.AsMessage().Body)
 	if err != nil {
-		log.Println(err)
 		return
 	}
 	if len(msgs) >= 1 && msgs[0] == "!wiki" {

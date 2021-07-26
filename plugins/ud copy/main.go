@@ -16,7 +16,7 @@ func Handle(source mautrix.EventSource, evt *event.Event) {
 	}
 	msgs, err := gosh.Split(evt.Content.AsMessage().Body)
 	if err != nil {
-		//matrix.Client.SendText(evt.RoomID, err.Error())
+		matrix.Client.SendText(evt.RoomID, err.Error())
 		return
 	}
 	if len(msgs) >= 1 && msgs[0] == "!ud" {

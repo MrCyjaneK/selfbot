@@ -97,7 +97,7 @@ func Handle(source mautrix.EventSource, evt *event.Event) {
 	}
 	args, err := gosh.Split(evt.Content.AsMessage().Body)
 	if err != nil {
-		matrix.Client.SendText(evt.RoomID, err.Error())
+		//matrix.Client.SendText(evt.RoomID, err.Error())
 		return
 	}
 	if len(args) >= 1 && args[0] == "!peertube" {

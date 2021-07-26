@@ -1,6 +1,6 @@
 # Selfbot
 
-Simple, easy to use (and deploy/hack) bot for matrix.
+Simple, easy to use (and deploy/hack) bot for matrix. [Join our matrix](https://matrix.to/#/#selfbot:mrcyjanek.net)
 
 # Setup
 
