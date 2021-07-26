@@ -47,6 +47,9 @@ func Login() error {
 			homeserver := Ask("Homeserver (eg. mrcyjanek.net)")
 			accesstoken := Ask("Access token (eg. dijbejbfaicpsbigwkcgauie)")
 			username := Ask("Username (eg. cyjan)")
+			db.Set("meta.homeserver", []byte(homeserver))
+			db.Set("meta.accesstoken", []byte(accesstoken))
+			db.Set("meta.userid", []byte("@"+username+":"+homeserver))
 			var err error
 			Client, err = mautrix.NewClient(homeserver, id.NewUserID(username, homeserver), accesstoken)
 			if err != nil {
