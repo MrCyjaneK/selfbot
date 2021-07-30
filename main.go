@@ -80,7 +80,18 @@ func main() {
 			return
 		}
 		if evt.Content.AsMessage().Body == "!help" {
-			matrix.Client.SendText(evt.RoomID, "List of available commands: \n  - "+strings.Join(cmds, "\n  - "))
+			matrix.Client.SendMessageEvent(evt.RoomID, event.EventMessage, &event.MessageEventContent{
+					MsgType: event.MsgText,
+					Body:    " * "+"List of available commands: \n  - "+strings.Join(cmds, "\n  - "),
+					NewContent: &event.MessageEventContent{
+						MsgType: event.MsgText,
+						Body: "List of available commands: \n  - "+strings.Join(cmds, "\n  - "),
+					},
+					RelatesTo: &event.RelatesTo{
+						Type: event.RelReplace,
+						EventID: evt.ID,
+					},
+				    })
 		}
 	})
 	err = matrix.Client.Sync()

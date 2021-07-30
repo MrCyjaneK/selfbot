@@ -76,11 +76,23 @@ func Handle(source mautrix.EventSource, evt *event.Event) {
 					j.Extract = "We were unable to define this term."
 				}
 				message := fmt.Sprintf(msgformat, j.Title, j.Extract)
-				matrix.Client.SendMessageEvent(evt.RoomID, event.EventMessage, format.RenderMarkdown(message, false, true))
+				matrix.Client.SendMessageEvent(evt.RoomID, event.EventMessage, &event.MessageEventContent{
+				Body: " * "+format.RenderMarkdown(message, false, true).Body,
+				Format: format.RenderMarkdown(message, false, true).Format,
+				FormattedBody: " * "+format.RenderMarkdown(message, false, true).FormattedBody,
+				NewContent: &event.MessageEventContent{
+					MsgType: event.MsgText,
+					Body: format.RenderMarkdown(message, false, true).Body,
+					Format: format.RenderMarkdown(message, false, true).Format,
+					FormattedBody: format.RenderMarkdown(message, false, true).FormattedBody,
+
+				},
+				RelatesTo: &event.RelatesTo{
+					Type: event.RelReplace,
+					EventID: evt.ID,
+				},
+			})
 			}
 		}
-		matrix.Client.RedactEvent(evt.RoomID, evt.ID, mautrix.ReqRedact{
-			Reason: "[selfbot] This event already got processed",
-		})
 	}
 }
