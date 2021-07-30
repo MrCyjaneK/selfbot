@@ -11,22 +11,10 @@ import (
 )
 
 var Event = event.EventMessage
-var About = "!vote 'Question' 'Options'... - Create a voting poll"
-
-type WikiResponse struct {
-	Batchcomplete string `json:"batchcomplete"`
-	Query         struct {
-		Pages map[string]struct {
-			PageID  int    `json:"pageid"`
-			NS      int    `json:"ns"`
-			Title   string `json:"title"`
-			Extract string `json:"extract"`
-		} `json:"pages"`
-	} `json:"query"`
-}
+var About = []string{"!vote 'Question' 'Options'... - Create a voting poll"}
 
 func Handle(source mautrix.EventSource, evt *event.Event) {
-	if evt.Sender != matrix.Client.UserID {
+	if !matrix.IsSelf(*evt) || matrix.IsOld(*evt) {
 		return
 	}
 	msgs, err := gosh.Split(evt.Content.AsMessage().Body)

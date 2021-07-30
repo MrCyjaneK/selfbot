@@ -15,7 +15,7 @@ import (
 )
 
 var Event = event.EventMessage
-var About = "!wiki 'langcode (en)' 'search (Stack Overflow)'... "
+var About = []string{"!wiki 'langcode (en)' 'search (Stack Overflow)'... "}
 
 type WikiResponse struct {
 	Batchcomplete string `json:"batchcomplete"`
@@ -33,7 +33,7 @@ var msgformat = `🌐<b>%s</b>
 🗒️<i>%s</i>`
 
 func Handle(source mautrix.EventSource, evt *event.Event) {
-	if evt.Sender != matrix.Client.UserID {
+	if !matrix.IsSelf(*evt) || matrix.IsOld(*evt) {
 		return
 	}
 	msgs, err := gosh.Split(evt.Content.AsMessage().Body)

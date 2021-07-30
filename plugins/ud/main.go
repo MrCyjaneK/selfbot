@@ -8,10 +8,10 @@ import (
 )
 
 var Event = event.EventMessage
-var About = "!ud 'word' - Get definition from urban dictionary"
+var About = []string{"!ud 'word' - Get definition from urban dictionary"}
 
 func Handle(source mautrix.EventSource, evt *event.Event) {
-	if evt.Sender != matrix.Client.UserID {
+	if !matrix.IsSelf(*evt) || matrix.IsOld(*evt) {
 		return
 	}
 	msgs, err := gosh.Split(evt.Content.AsMessage().Body)

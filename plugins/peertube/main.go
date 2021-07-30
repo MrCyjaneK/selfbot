@@ -89,10 +89,10 @@ type SepiaResponse struct {
 }
 
 var Event = event.EventMessage
-var About = "!peertube 'mode (one/many)' 'results number (integer)' 'search query' - Return search results from sepia search"
+var About = []string{"!peertube 'mode (one/many)' 'results number (integer)' 'search query' - Return search results from sepia search"}
 
 func Handle(source mautrix.EventSource, evt *event.Event) {
-	if evt.Sender != matrix.Client.UserID {
+	if !matrix.IsSelf(*evt) || matrix.IsOld(*evt) {
 		return
 	}
 	args, err := gosh.Split(evt.Content.AsMessage().Body)
@@ -103,7 +103,7 @@ func Handle(source mautrix.EventSource, evt *event.Event) {
 	if len(args) >= 1 && args[0] == "!peertube" {
 		matrix.Client.SendReaction(evt.RoomID, evt.ID, "processing...")
 		if len(args) != 4 {
-			matrix.Client.SendText(evt.RoomID, About)
+			matrix.Client.SendText(evt.RoomID, About[0])
 			return
 		}
 		count, err := strconv.Atoi(args[2])

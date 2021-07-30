@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"plugin"
 	"strings"
+	"time"
 
 	"git.mrcyjanek.net/mrcyjanek/selfbot/db"
 	"git.mrcyjanek.net/mrcyjanek/selfbot/matrix"
@@ -27,6 +28,18 @@ func main() {
 	}
 	matrix.Client.Store = &db.Storer{}
 	syncer := matrix.Client.Syncer.(*mautrix.DefaultSyncer)
+	if string(db.Get("meta.loaded")) != "true" {
+		log.Println("Doing an initial sync... The program will close after 30 seconds, please restart it afterwards.")
+		go func() {
+			err = matrix.Client.Sync()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}()
+		time.Sleep(time.Second * 30)
+		db.Set("meta.loaded", []byte("true"))
+		os.Exit(0)
+	}
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -50,7 +63,10 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			cmds = append(cmds, *pAbout.(*string))
+			abts := *pAbout.(*[]string)
+			for i := range abts {
+				cmds = append(cmds, abts[i])
+			}
 			ev := pEvent.(*event.Type)
 			syncer.OnEventType(*ev, pHandle.(func(mautrix.EventSource, *event.Event)))
 		}
@@ -60,7 +76,7 @@ func main() {
 		log.Fatal(err)
 	}
 	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
-		if evt.Sender != matrix.Client.UserID {
+		if !matrix.IsSelf(*evt) || matrix.IsOld(*evt) {
 			return
 		}
 		if evt.Content.AsMessage().Body == "!help" {
