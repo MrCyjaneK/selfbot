@@ -84,7 +84,7 @@ type SepiaResponse struct {
 				CreatedAt time.Time `json:"createdAt"`
 				UpdatedAt time.Time `json:"updatedAt"`
 			} `json:"avatar"`
-		} `json:'channel'`
+		} `json:"channel"`
 	} `json:"data"`
 }
 
