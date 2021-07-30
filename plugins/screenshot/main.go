@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 
 	gosh "git.mrcyjanek.net/mrcyjanek/gosh/_core"
 	"git.mrcyjanek.net/mrcyjanek/selfbot/matrix"
@@ -33,24 +32,19 @@ func Handle(source mautrix.EventSource, evt *event.Event) {
 		url := msgs[1]
 
 		var imageBuf []byte
-		log.Println("1")
 		if err := chromedp.Run(abc, screenshotTasks(url, &imageBuf)); err != nil {
-			log.Fatal(err.Error())
 			matrix.Client.SendText(evt.RoomID, err.Error())
 			return
 		}
-		log.Println(len(imageBuf))
 		r, err := matrix.Client.UploadBytes(imageBuf, "image/png")
 		if err != nil {
 			matrix.Client.SendText(evt.RoomID, err.Error())
-			log.Fatal(err.Error())
 			return
 		}
 		_, err = matrix.Client.SendImage(evt.RoomID, "Screenshot of "+msgs[1], r.ContentURI)
 
 		if err != nil {
 			matrix.Client.SendText(evt.RoomID, err.Error())
-			log.Fatal(err.Error())
 			return
 		}
 		matrix.Client.RedactEvent(evt.RoomID, evt.ID, mautrix.ReqRedact{
