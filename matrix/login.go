@@ -62,19 +62,15 @@ func Login() error {
 			body, err := ioutil.ReadAll(res.Body)
 			var content map[string] map[string] interface{}
 			json.Unmarshal(body, &content)
-			homeserver2 := content["m.homeserver"]["base_url"].(string)
-			homeserver2 = strings.Split(homeserver, "/")[2]
-			db.Set("meta.homeserver", []byte(homeserver2))
+			homeserver_addr := content["m.homeserver"]["base_url"].(string)
+			homeserver_addr = strings.Split(homeserver_addr, "/")[2]
+			db.Set("meta.homeserver", []byte(homeserver_addr))
 			db.Set("meta.accesstoken", []byte(accesstoken))
 			db.Set("meta.userid", []byte("@"+username+":"+homeserver))
 						if err != nil {
 				return err
 			}
-			if homeserver == "mozilla.modular.im" {
-				Client, err = mautrix.NewClient(homeserver, id.NewUserID(username, "mozilla.org"), accesstoken)
-			} else {
-				Client, err = mautrix.NewClient(homeserver, id.NewUserID(username, homeserver), accesstoken)
-			}
+			Client, err = mautrix.NewClient(homeserver_addr, id.NewUserID(username, homeserver), accesstoken)
 			if err != nil {
 				return err
 			}
@@ -83,12 +79,9 @@ func Login() error {
 	homeserver := string(db.Get("meta.homeserver"))
 	accesstoken := string(db.Get("meta.accesstoken"))
 	username := strings.Split(strings.Split(string(db.Get("meta.userid")), ":")[0], "@")[1]
+	homeserver_name := strings.Split(string(db.Get("meta.userid")), ":")[1]
 	var err error
-	if homeserver == "mozilla.modular.im" {
-				Client, err = mautrix.NewClient(homeserver, id.NewUserID(username, "mozilla.org"), accesstoken)
-			} else {
-				Client, err = mautrix.NewClient(homeserver, id.NewUserID(username, homeserver), accesstoken)
-			}
+	Client, err = mautrix.NewClient(homeserver, id.NewUserID(username, homeserver_name), accesstoken)
 	return err
 }
 
