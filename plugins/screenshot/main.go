@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 
-	gosh "git.mrcyjanek.net/mrcyjanek/gosh/_core"
 	"git.mrcyjanek.net/mrcyjanek/selfbot/matrix"
 	"github.com/chromedp/chromedp"
 	"maunium.net/go/mautrix"
@@ -12,24 +11,23 @@ import (
 
 var Event = event.EventMessage
 var About = []string{"!screenshot 'url' 'Options'... - Take screenshot of a website."}
+var Command = "!screenshot"
 
 func Handle(source mautrix.EventSource, evt *event.Event) {
-	if !matrix.IsSelf(*evt) || matrix.IsOld(*evt) {
+	ok, args := matrix.ProcessMsg(*evt, Command)
+	if !ok {
 		return
 	}
-	msgs, err := gosh.Split(evt.Content.AsMessage().Body)
-	if err != nil {
-		return
-	}
-	if len(msgs) >= 1 && msgs[0] == "!screenshot" {
-		if len(msgs) < 2 {
+
+	if len(args) >= 1 && args[0] == Command {
+		if len(args) < 2 {
 			matrix.Client.SendText(evt.RoomID, "Please use the correct syntax, for example `"+About[0]+"`")
 			return
 		}
 		abc, cancel := chromedp.NewContext(context.Background())
 		defer cancel()
 
-		url := msgs[1]
+		url := args[1]
 
 		var imageBuf []byte
 		if err := chromedp.Run(abc, screenshotTasks(url, &imageBuf)); err != nil {
@@ -41,7 +39,7 @@ func Handle(source mautrix.EventSource, evt *event.Event) {
 			matrix.Client.SendText(evt.RoomID, err.Error())
 			return
 		}
-		_, err = matrix.Client.SendImage(evt.RoomID, "Screenshot of "+msgs[1], r.ContentURI)
+		_, err = matrix.Client.SendImage(evt.RoomID, "Screenshot of "+url, r.ContentURI)
 
 		if err != nil {
 			matrix.Client.SendText(evt.RoomID, err.Error())

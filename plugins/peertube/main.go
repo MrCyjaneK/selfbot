@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	gosh "git.mrcyjanek.net/mrcyjanek/gosh/_core"
-
 	"git.mrcyjanek.net/mrcyjanek/selfbot/matrix"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
@@ -90,81 +88,77 @@ type SepiaResponse struct {
 
 var Event = event.EventMessage
 var About = []string{"!peertube 'mode (one/many)' 'results number (integer)' 'search query' - Return search results from sepia search"}
+var Command = "!peertube"
 
 func Handle(source mautrix.EventSource, evt *event.Event) {
-	if !matrix.IsSelf(*evt) || matrix.IsOld(*evt) {
+	ok, args := matrix.ProcessMsg(*evt, Command)
+	if !ok {
 		return
 	}
-	args, err := gosh.Split(evt.Content.AsMessage().Body)
+
+	matrix.Client.SendReaction(evt.RoomID, evt.ID, "processing...")
+	if len(args) != 4 {
+		matrix.Client.SendText(evt.RoomID, About[0])
+		return
+	}
+	count, err := strconv.Atoi(args[2])
 	if err != nil {
-		//matrix.Client.SendText(evt.RoomID, err.Error())
+		matrix.Client.SendText(evt.RoomID, err.Error())
 		return
 	}
-	if len(args) >= 1 && args[0] == "!peertube" {
-		matrix.Client.SendReaction(evt.RoomID, evt.ID, "processing...")
-		if len(args) != 4 {
-			matrix.Client.SendText(evt.RoomID, About[0])
-			return
+	url := "https://sepiasearch.org/api/v1/search/videos?search=" + url.QueryEscape(args[3]) + "&boostLanguages[]=en&nsfw=true&start=0&count=" + strconv.Itoa(count) + "&sort=-match"
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		matrix.Client.SendText(evt.RoomID, err.Error())
+		return
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		matrix.Client.SendText(evt.RoomID, err.Error())
+		return
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		matrix.Client.SendText(evt.RoomID, err.Error())
+		return
+	}
+	var resp SepiaResponse
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		matrix.Client.SendText(evt.RoomID, err.Error())
+		return
+	}
+	switch args[1] {
+	case "one":
+		msg := "Search results for query: <code>" + args[3] + "</code>\n"
+		for i := range resp.Data {
+			j := resp.Data[i]
+			msg += strconv.Itoa(i+1) + ". <a href=\"" + j.URL + "\">" + j.Name + "</a>\n"
 		}
-		count, err := strconv.Atoi(args[2])
-		if err != nil {
-			matrix.Client.SendText(evt.RoomID, err.Error())
-			return
-		}
-		url := "https://sepiasearch.org/api/v1/search/videos?search=" + url.QueryEscape(args[3]) + "&boostLanguages[]=en&nsfw=true&start=0&count=" + strconv.Itoa(count) + "&sort=-match"
-		req, err := http.NewRequest("GET", url, nil)
-		if err != nil {
-			matrix.Client.SendText(evt.RoomID, err.Error())
-			return
-		}
-		res, err := http.DefaultClient.Do(req)
-		if err != nil {
-			matrix.Client.SendText(evt.RoomID, err.Error())
-			return
-		}
-		defer res.Body.Close()
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			matrix.Client.SendText(evt.RoomID, err.Error())
-			return
-		}
-		var resp SepiaResponse
-		err = json.Unmarshal(body, &resp)
-		if err != nil {
-			matrix.Client.SendText(evt.RoomID, err.Error())
-			return
-		}
-		switch args[1] {
-		case "one":
-			msg := "Search results for query: <code>" + args[3] + "</code>\n"
-			for i := range resp.Data {
-				j := resp.Data[i]
-				msg += strconv.Itoa(i+1) + ". <a href=\"" + j.URL + "\">" + j.Name + "</a>\n"
-			}
-			matrix.Client.SendMessageEvent(evt.RoomID, event.EventMessage, format.RenderMarkdown(msg, false, true))
-		case "many":
-			for i := range resp.Data {
-				j := resp.Data[i]
-				msg := `🌐 <a href="%[1]s">%[2]s</a>
+		matrix.Client.SendMessageEvent(evt.RoomID, event.EventMessage, format.RenderMarkdown(msg, false, true))
+	case "many":
+		for i := range resp.Data {
+			j := resp.Data[i]
+			msg := `🌐 <a href="%[1]s">%[2]s</a>
 🗒️<i>%[3]s</i>
 🐷<a href="%[4]s">%[5]s</a>
 `
-				// 1. URL to video
-				// 2. Name
-				// 3. Description
-				// 4. Uploader URL
-				// 5. Uploader name
-				resp, err := matrix.Client.UploadLink(j.PreviewUrl)
-				if err != nil {
-					matrix.Client.SendText(evt.RoomID, "Unable to send preview:"+err.Error())
-				} else {
-					matrix.Client.SendImage(evt.RoomID, "", resp.ContentURI)
-				}
-				matrix.Client.SendMessageEvent(evt.RoomID, event.EventMessage, format.RenderMarkdown(fmt.Sprintf(msg, j.URL, j.Name, j.Description, j.Account.URL, j.Account.Name), false, true))
+			// 1. URL to video
+			// 2. Name
+			// 3. Description
+			// 4. Uploader URL
+			// 5. Uploader name
+			resp, err := matrix.Client.UploadLink(j.PreviewUrl)
+			if err != nil {
+				matrix.Client.SendText(evt.RoomID, "Unable to send preview:"+err.Error())
+			} else {
+				matrix.Client.SendImage(evt.RoomID, "", resp.ContentURI)
 			}
+			matrix.Client.SendMessageEvent(evt.RoomID, event.EventMessage, format.RenderMarkdown(fmt.Sprintf(msg, j.URL, j.Name, j.Description, j.Account.URL, j.Account.Name), false, true))
 		}
-		matrix.Client.RedactEvent(evt.RoomID, evt.ID, mautrix.ReqRedact{
-			Reason: "[selfbot] This event already got processed",
-		})
 	}
+	matrix.Client.RedactEvent(evt.RoomID, evt.ID, mautrix.ReqRedact{
+		Reason: "[selfbot] This event already got processed",
+	})
 }

@@ -10,12 +10,15 @@ import (
 
 var Event = event.EventMessage
 var About = []string{"!ping - pong!"}
+var Command = "!ping"
 
 func Handle(source mautrix.EventSource, evt *event.Event) {
-	if !matrix.IsSelf(*evt) || matrix.IsOld(*evt) {
+	ok, args := matrix.ProcessMsg(*evt, Command)
+	if !ok {
 		return
 	}
-	if evt.Content.AsMessage().Body == "!ping" {
+
+	if args[0] == Command {
 		_, err := matrix.Client.SendText(evt.RoomID, "pong!")
 		if err != nil {
 			log.Println(err)
