@@ -31,11 +31,11 @@ func Login() error {
 			if err != nil {
 				return err
 			}
-			var content map[string]map[string]interface{}
+			var content map[string]map[string]string
 			json.Unmarshal(body, &content)
-			homeserver2 := content["m.homeserver"]["base_url"].(string)
-			homeserver2 = strings.Split(homeserver2, "/")[2]
-			Client, err := mautrix.NewClient(homeserver2, "", "")
+			homeserver_addr := content["m.homeserver"]["base_url"]
+			homeserver_addr = strings.Split(homeserver_addr, "/")[2]
+			Client, err := mautrix.NewClient(homeserver_addr, "", "")
 			if err != nil {
 				return err
 			}
@@ -54,7 +54,7 @@ func Login() error {
 			fmt.Println("accesstoken:", resp.AccessToken)
 			fmt.Println("deviceid:", resp.DeviceID)
 			fmt.Println("userid:", resp.UserID)
-			db.Set("meta.homeserver", []byte(homeserver2))       // mrcyjanek.net
+			db.Set("meta.homeserver", []byte(homeserver_addr))       // mrcyjanek.net
 			db.Set("meta.accesstoken", []byte(resp.AccessToken)) // ZaI......................JRY
 			db.Set("meta.deviceid", []byte(resp.DeviceID))       // bt7s33Z2
 			db.Set("meta.userid", []byte(resp.UserID))           // @cyjan:mrcyjanek.net
@@ -73,24 +73,19 @@ func Login() error {
 			}
 			var content map[string]map[string]string
 			json.Unmarshal(body, &content)
-			homeserver2 := content["m.homeserver"]["base_url"]
-			homeserver2 = strings.Split(homeserver2, "/")[2]
-			db.Set("meta.homeserver", []byte(homeserver2))
+			homeserver_addr := content["m.homeserver"]["base_url"]
+			homeserver_addr = strings.Split(homeserver_addr, "/")[2]
+			db.Set("meta.homeserver", []byte(homeserver_addr))
 			db.Set("meta.accesstoken", []byte(accesstoken))
 			db.Set("meta.userid", []byte("@"+username+":"+homeserver))
-			if err != nil {
-				return err
-			}
-			if err != nil {
-				return err
-			}
 		}
 	}
 	homeserver := string(db.Get("meta.homeserver"))
 	accesstoken := string(db.Get("meta.accesstoken"))
 	username := strings.Split(strings.Split(string(db.Get("meta.userid")), ":")[0], "@")[1]
+	homeserver_name := strings.Split(string(db.Get("meta.userid")), ":")[1]
 	var err error
-	Client, err = mautrix.NewClient(homeserver, id.NewUserID(username, homeserver), accesstoken)
+	Client, err = mautrix.NewClient(homeserver, id.NewUserID(username, homeserver_name), accesstoken)
 	return err
 }
 
