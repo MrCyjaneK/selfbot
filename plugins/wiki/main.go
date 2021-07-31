@@ -79,17 +79,17 @@ func Handle(source mautrix.EventSource, evt *event.Event) {
 				message := fmt.Sprintf(msgformat, j.Title, j.Extract)
 				if args_count == 0 {
 					matrix.Client.SendMessageEvent(evt.RoomID, event.EventMessage, &event.MessageEventContent{
-						Body: " * "+format.RenderMarkdown(message, false, true).Body,
-						Format: format.RenderMarkdown(message, false, true).Format,
-						FormattedBody: " * "+format.RenderMarkdown(message, false, true).FormattedBody,
+						Body:          " * " + format.RenderMarkdown(message, false, true).Body,
+						Format:        format.RenderMarkdown(message, false, true).Format,
+						FormattedBody: " * " + format.RenderMarkdown(message, false, true).FormattedBody,
 						NewContent: &event.MessageEventContent{
-							MsgType: event.MsgText,
-							Body: format.RenderMarkdown(message, false, true).Body,
-							Format: format.RenderMarkdown(message, false, true).Format,
+							MsgType:       event.MsgText,
+							Body:          format.RenderMarkdown(message, false, true).Body,
+							Format:        format.RenderMarkdown(message, false, true).Format,
 							FormattedBody: format.RenderMarkdown(message, false, true).FormattedBody,
 						},
 						RelatesTo: &event.RelatesTo{
-							Type: event.RelReplace,
+							Type:    event.RelReplace,
 							EventID: evt.ID,
 						},
 					})
@@ -97,7 +97,7 @@ func Handle(source mautrix.EventSource, evt *event.Event) {
 					matrix.Client.SendMessageEvent(evt.RoomID, event.EventMessage, format.RenderMarkdown(message, false, true))
 				}
 			}
-			args_count ++
+			args_count++
 		}
 	}
 }
