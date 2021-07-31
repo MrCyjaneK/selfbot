@@ -1,11 +1,12 @@
 package matrix
 
 import (
-	"fmt"
-	"strings"
-	"net/http"
-	"io/ioutil"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
+
 	"git.mrcyjanek.net/mrcyjanek/selfbot/db"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/id"
@@ -21,15 +22,19 @@ func Login() error {
 			homeserver := Ask("Homeserver (eg. mrcyjanek.net)")
 			username := Ask("Username (eg. cyjan)")
 			password := Ask("Password (eg. ***** *** * **)")
-			url := "https://"+homeserver+"/.well-known/matrix/client"
+			url := "https://" + homeserver + "/.well-known/matrix/client"
 			res, err := http.Get(url)
 			if err != nil {
+				return err
 			}
 			body, err := ioutil.ReadAll(res.Body)
-			var content map[string] map[string] interface{}
+			if err != nil {
+				return err
+			}
+			var content map[string]map[string]interface{}
 			json.Unmarshal(body, &content)
 			homeserver2 := content["m.homeserver"]["base_url"].(string)
-			homeserver2 = strings.Split(homeserver, "/")[2]
+			homeserver2 = strings.Split(homeserver2, "/")[2]
 			Client, err := mautrix.NewClient(homeserver2, "", "")
 			if err != nil {
 				return err
@@ -49,7 +54,7 @@ func Login() error {
 			fmt.Println("accesstoken:", resp.AccessToken)
 			fmt.Println("deviceid:", resp.DeviceID)
 			fmt.Println("userid:", resp.UserID)
-			db.Set("meta.homeserver", []byte(homeserver2))        // mrcyjanek.net
+			db.Set("meta.homeserver", []byte(homeserver2))       // mrcyjanek.net
 			db.Set("meta.accesstoken", []byte(resp.AccessToken)) // ZaI......................JRY
 			db.Set("meta.deviceid", []byte(resp.DeviceID))       // bt7s33Z2
 			db.Set("meta.userid", []byte(resp.UserID))           // @cyjan:mrcyjanek.net
@@ -57,17 +62,23 @@ func Login() error {
 			homeserver := Ask("Homeserver (eg. mrcyjanek.net)")
 			accesstoken := Ask("Access token (eg. dijbejbfaicpsbigwkcgauie)")
 			username := Ask("Username (eg. cyjan)")
-			url := "https://"+homeserver+"/.well-known/matrix/client"
+			url := "https://" + homeserver + "/.well-known/matrix/client"
 			res, err := http.Get(url)
+			if err != nil {
+				return err
+			}
 			body, err := ioutil.ReadAll(res.Body)
-			var content map[string] map[string] interface{}
+			if err != nil {
+				return err
+			}
+			var content map[string]map[string]string
 			json.Unmarshal(body, &content)
 			homeserver_addr := content["m.homeserver"]["base_url"].(string)
 			homeserver_addr = strings.Split(homeserver_addr, "/")[2]
 			db.Set("meta.homeserver", []byte(homeserver_addr))
 			db.Set("meta.accesstoken", []byte(accesstoken))
 			db.Set("meta.userid", []byte("@"+username+":"+homeserver))
-						if err != nil {
+			if err != nil {
 				return err
 			}
 			Client, err = mautrix.NewClient(homeserver_addr, id.NewUserID(username, homeserver), accesstoken)
