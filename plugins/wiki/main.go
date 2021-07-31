@@ -46,6 +46,7 @@ func Handle(source mautrix.EventSource, evt *event.Event) {
 			matrix.Client.SendText(evt.RoomID, "Please use the correct syntax, for example `!wiki \"langcode (en)\" \"search (Stack Overflow)\"")
 			return
 		}
+		args_count := 0
 		for code := range msgs[2:] {
 			url := "https://" + url.QueryEscape(msgs[1]) + ".wikipedia.org/w/api.php?action=query&format=json&prop=extracts&titles=" + url.QueryEscape(msgs[code+2]) + "&exsentences=5&exlimit=1&exintro=1&explaintext=1"
 			req, err := http.NewRequest("GET", url, nil)
@@ -76,23 +77,27 @@ func Handle(source mautrix.EventSource, evt *event.Event) {
 					j.Extract = "We were unable to define this term."
 				}
 				message := fmt.Sprintf(msgformat, j.Title, j.Extract)
-				matrix.Client.SendMessageEvent(evt.RoomID, event.EventMessage, &event.MessageEventContent{
-				Body: " * "+format.RenderMarkdown(message, false, true).Body,
-				Format: format.RenderMarkdown(message, false, true).Format,
-				FormattedBody: " * "+format.RenderMarkdown(message, false, true).FormattedBody,
-				NewContent: &event.MessageEventContent{
-					MsgType: event.MsgText,
-					Body: format.RenderMarkdown(message, false, true).Body,
-					Format: format.RenderMarkdown(message, false, true).Format,
-					FormattedBody: format.RenderMarkdown(message, false, true).FormattedBody,
-
-				},
-				RelatesTo: &event.RelatesTo{
-					Type: event.RelReplace,
-					EventID: evt.ID,
-				},
-			})
+				if args_count == 0 {
+					matrix.Client.SendMessageEvent(evt.RoomID, event.EventMessage, &event.MessageEventContent{
+						Body: " * "+format.RenderMarkdown(message, false, true).Body,
+						Format: format.RenderMarkdown(message, false, true).Format,
+						FormattedBody: " * "+format.RenderMarkdown(message, false, true).FormattedBody,
+						NewContent: &event.MessageEventContent{
+							MsgType: event.MsgText,
+							Body: format.RenderMarkdown(message, false, true).Body,
+							Format: format.RenderMarkdown(message, false, true).Format,
+							FormattedBody: format.RenderMarkdown(message, false, true).FormattedBody,
+						},
+						RelatesTo: &event.RelatesTo{
+							Type: event.RelReplace,
+							EventID: evt.ID,
+						},
+					})
+				} else {
+					matrix.Client.SendMessageEvent(evt.RoomID, event.EventMessage, format.RenderMarkdown(message, false, true))
+				}
 			}
+			args_count ++
 		}
 	}
 }
